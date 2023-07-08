@@ -12,17 +12,24 @@ use std::{
 #[derive(Parser, Clone, Debug, Default)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// The regular expression to match against.
+    /// A regular expression to match each line of the output piped to this
+    /// program against. Each capture group will be styled with the color
+    /// corresponding to the group name, or a default color based on the capture
+    /// group index if the group has no name.
     #[arg(required = true)]
     regex: String,
 
-    /// Color map.
+    /// The rest of the arguments are key=value pairs, where the key is the name
+    /// of the capture group, and the value is a comma-separated list of styles
+    /// to apply to that capture group. The styles are applied in order, so
+    /// `bold,red` will make the text bold and red, while `red,green` will make
+    /// the text green.
     #[arg()]
-    colors: Vec<String>,
+    styles: Vec<String>,
 }
 
 lazy_static! {
-    static ref DEFAULT_COLORS: Vec<Style> = {
+    static ref DEFAULT_STYLES: Vec<Style> = {
         vec![
             Style::new().red(),
             Style::new().green(),
@@ -35,7 +42,7 @@ lazy_static! {
     };
 }
 
-fn parse_color(s: &str) -> Result<Style> {
+fn parse_style(s: &str) -> Result<Style> {
     let mut style = Style::new();
     for part in s.split(',') {
         if part.starts_with('#') {
@@ -80,18 +87,18 @@ fn parse_color(s: &str) -> Result<Style> {
     Ok(style)
 }
 
-fn parse_styles(colors: Vec<String>) -> Result<HashMap<String, Style>> {
+fn parse_styles(styles: Vec<String>) -> Result<HashMap<String, Style>> {
     let mut map = HashMap::new();
-    for color in colors {
-        let mut pair = color.split('=');
+    for style in styles {
+        let mut pair = style.split('=');
         let key = pair
             .next()
-            .context("invalid colors, format is key=value,key=value")?;
+            .context("invalid styles, format is key=value,key=value")?;
         let value = pair
             .next()
-            .context("invalid colors, format is key=value,key=value")?;
-        let color = parse_color(value)?;
-        map.insert(key.to_string(), color);
+            .context("invalid styles, format is key=value,key=value")?;
+        let style = parse_style(value)?;
+        map.insert(key.to_string(), style);
     }
     Ok(map)
 }
@@ -103,7 +110,7 @@ enum Op {
 
 fn run(input: impl BufRead, mut output: impl Write, args: Args) -> Result<()> {
     let regex = Regex::new(&args.regex).context("invalid regex")?;
-    let styles = parse_styles(args.colors)?;
+    let styles = parse_styles(args.styles)?;
 
     let mut ops_by_position: HashMap<usize, Vec<Op>> = HashMap::new();
     let mut style_stack: Vec<Style> = Vec::new();
@@ -119,8 +126,8 @@ fn run(input: impl BufRead, mut output: impl Write, args: Args) -> Result<()> {
                     Some(Some(name)) => styles
                         .get(name)
                         .copied()
-                        .unwrap_or(DEFAULT_COLORS[i % DEFAULT_COLORS.len()]),
-                    _ => DEFAULT_COLORS[i % DEFAULT_COLORS.len()],
+                        .unwrap_or(DEFAULT_STYLES[i % DEFAULT_STYLES.len()]),
+                    _ => DEFAULT_STYLES[i % DEFAULT_STYLES.len()],
                 };
 
                 if let Some(mat) = capture {
@@ -179,13 +186,13 @@ mod tests {
     #[test_case(
         vec!["(foo)"],
         "hello foo",
-        format!("hello {}\n", "foo".style(DEFAULT_COLORS[1]))
+        format!("hello {}\n", "foo".style(DEFAULT_STYLES[1]))
         ; "single match")
     ]
     #[test_case(
         vec!["(foo)(bar)"],
         "hello foobar",
-        format!("hello {}{}\n", "foo".style(DEFAULT_COLORS[1]), "bar".style(DEFAULT_COLORS[2]))
+        format!("hello {}{}\n", "foo".style(DEFAULT_STYLES[1]), "bar".style(DEFAULT_STYLES[2]))
         ; "multiple match")
     ]
     #[test_case(
@@ -203,7 +210,7 @@ mod tests {
         "12345 12345 12345",
         format!(
             "1234{0} 1234{0} 1234{0}\n",
-            "5".style(DEFAULT_COLORS[1]),
+            "5".style(DEFAULT_STYLES[1]),
         )
         ; "multiple single match")
     ]
@@ -227,7 +234,7 @@ mod tests {
         "12345 12345 1235",
         format!(
             "12345 12345 123{0}\n",
-            "5".style(DEFAULT_COLORS[1]),
+            "5".style(DEFAULT_STYLES[1]),
         )
         ; "regex with non-capture group component")
     ]
@@ -236,8 +243,8 @@ mod tests {
         "12345 12345 1235",
         format!(
             "12345 12345 12{}{}\n",
-            "3".style(DEFAULT_COLORS[1]),
-            "5".style(DEFAULT_COLORS[2]),
+            "3".style(DEFAULT_STYLES[1]),
+            "5".style(DEFAULT_STYLES[2]),
         )
         ; "capture group inside another capture group")
     ]
