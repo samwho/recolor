@@ -9,6 +9,24 @@ control in what the output looks like.
 
 ![](images/demo.gif)
 
+## Installation
+
+### Homebrew (Mac)
+
+```bash
+brew tap samwho/tap
+brew install recolor
+```
+
+### From source
+
+Requires [Rust](https://rustup.rs/) to be installed on your system, so you have
+access to the `cargo` command:
+
+```bash
+cargo install recolor
+```
+
 ## How it works
 
 `recolor` reads input line by line and applies the regular expression you
