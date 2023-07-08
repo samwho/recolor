@@ -23,22 +23,22 @@ struct Args {
 
 lazy_static! {
     static ref DEFAULT_COLORS: Vec<Style> = {
-        let mut vec = Vec::new();
-        vec.push(Style::new().red());
-        vec.push(Style::new().green());
-        vec.push(Style::new().yellow());
-        vec.push(Style::new().blue());
-        vec.push(Style::new().magenta());
-        vec.push(Style::new().cyan());
-        vec.push(Style::new().white());
-        vec
+        vec![
+            Style::new().red(),
+            Style::new().green(),
+            Style::new().yellow(),
+            Style::new().blue(),
+            Style::new().magenta(),
+            Style::new().cyan(),
+            Style::new().white(),
+        ]
     };
 }
 
 fn parse_color(s: &str) -> Result<Style> {
     let mut style = Style::new();
-    for part in s.split(",") {
-        if part.starts_with("#") {
+    for part in s.split(',') {
+        if part.starts_with('#') {
             if part.len() != 7 {
                 return Err(anyhow::anyhow!(format!("invalid hex color: \"{}\"", s)));
             }
