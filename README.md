@@ -1,5 +1,8 @@
 # recolor
 
+[![Build status](https://github.com/samwho/recolor/workflows/Build/badge.svg)](https://github.com/samwho/recolor/actions)
+[![Crates.io](https://img.shields.io/crates/v/recolor.svg)](https://crates.io/crates/recolor)
+
 `recolor` is a tool to help you colourise the output of any command. It works
 using familiar regular expressions, and gives you lots of flexibility and
 control in what the output looks like.
