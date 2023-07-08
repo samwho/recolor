@@ -10,7 +10,9 @@ use std::{
 };
 
 #[derive(Parser, Clone, Debug, Default)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version)]
+/// Recolor the output of any command by piping it to recolor.
+/// See https://github.com/samwho/recolor for examples.
 struct Args {
     /// A regular expression to match each line of the output piped to this
     /// program against. Each capture group will be styled with the color
